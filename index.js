@@ -49,7 +49,6 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
         users.push({ username, _id });
       }
       res.json(users);
-
     } catch (err) {
       console.error(err);
     }
@@ -91,7 +90,8 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
       return res.status(500).send(`Error while fetching _id: ${err}`);
     }
   });
- 
+
+  
 
   const listener = app.listen(port, () => {
     console.log('Listening on port ' + listener.address().port);
