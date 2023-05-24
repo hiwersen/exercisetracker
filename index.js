@@ -49,37 +49,49 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
         users.push({ username, _id });
       }
       res.json(users);
-      
+
     } catch (err) {
       console.error(err);
     }
   });
 
-/**
- app.post('/api/users/:_id/exercises', async (req, res) => {
-    const { _id } = req.params;
-    let { description, duration, date } = req.body;
 
-    duration = parseInt(date);
+ app.post('/api/users/:_id/exercises', async (req, res) => {
+    const { _id: userId } = req.params;
+    let { description, duration, date } = req.body;
 
     if (!date) {
       date = new Date().toDateString();
     } else {
       const timestamp = Date.parse(date);
       if (!timestamp) {
-        res.send('Error: Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
+        return res.send('Error: Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
       } else {
         date = new Date(timestamp).toDateString();
       }
     }
 
     try {
-      const userDoc = await 
+      const userDoc = await UserModel.findById(userId);
+      if (!userDoc) {
+        return res.status(404).send(`No user found with _id: ${userId}`);
+      } else {
+        duration = parseInt(duration);
+        const exerciseDoc = new ExerciseModel({ description, duration, date, userId });
+        try {
+          const { description, duration, date } = await exerciseDoc.save();
+          const { username, _id } = userDoc;
+          res.json({ username, description, duration, date, _id });
+        } catch (err) {
+          console.error(err);
+        }
+      }
     } catch (err) {
       console.error(err);
+      return res.status(500).send(`Error while fetching _id: ${err}`);
     }
   });
- */
+ 
 
   const listener = app.listen(port, () => {
     console.log('Listening on port ' + listener.address().port);
