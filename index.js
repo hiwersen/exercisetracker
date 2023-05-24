@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const { MongoClient } = require('mongodb');
 const UserModel = require('./models/user');
+const ExerciseModel = require('./models/exercise');
 
 require('dotenv').config();
 
@@ -22,7 +22,8 @@ app.get('/', (req, res) => {
 
 mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
 .then(() => {
-  console.log(`Connected to the database ${mongoose.connection.name}`);
+  const dbName = mongoose.connection.name;
+  console.log(`Connected to the database ${dbName}`);
 
   // parse application/x-www-form-urlencoded
   // @see {@link https://www.npmjs.com/package/body-parser}
@@ -30,44 +31,55 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
 
   app.post('/api/users', async (req, res) => {
     const { username } = req.body;
-
     const userDoc = new UserModel({ username });
-
     try {
       const { username, _id } = await userDoc.save();
       res.json({ username, _id });
-
     } catch (err) {
       console.error(err);
     }
-
   });
 
   app.get('/api/users', async (req, res) => {
-    const client = new MongoClient(dbUri);
-
     try {
-      await client.connect();
-      try {
-        const dbName = dbUri.split('/').pop().split('?')[0];
-        const collectionName = UserModel.collection.name;
-        const db = client.db(dbName);
-        const collection = db.collection(collectionName);
-
-        const documents = await collection.find().toArray();
-        const users = [];
-        for (const doc of documents) {
-          const { username, _id } = doc;
-          users.push({ username, _id });
-        }
-        res.json(users);
-      } catch (err) {
-        console.error(`Error fetching documents from Collection ${collection}: ${err}`);
+      const userDocuments = await UserModel.find();
+      const users = [];
+      for (const doc of userDocuments) {
+        const { username, _id } = doc;
+        users.push({ username, _id });
       }
+      res.json(users);
+      
     } catch (err) {
-      console.error(`Error connnecting to the client ${err}`);
+      console.error(err);
     }
   });
+
+/**
+ app.post('/api/users/:_id/exercises', async (req, res) => {
+    const { _id } = req.params;
+    let { description, duration, date } = req.body;
+
+    duration = parseInt(date);
+
+    if (!date) {
+      date = new Date().toDateString();
+    } else {
+      const timestamp = Date.parse(date);
+      if (!timestamp) {
+        res.send('Error: Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
+      } else {
+        date = new Date(timestamp).toDateString();
+      }
+    }
+
+    try {
+      const userDoc = await 
+    } catch (err) {
+      console.error(err);
+    }
+  });
+ */
 
   const listener = app.listen(port, () => {
     console.log('Listening on port ' + listener.address().port);
