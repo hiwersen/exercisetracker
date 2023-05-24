@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const userModel = require('./models/user');
+const { MongoClient } = require('mongodb');
+const UserModel = require('./models/user');
 
 require('dotenv').config();
 
@@ -29,7 +30,7 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   app.post('/api/users', async (req, res) => {
     const { username } = req.body;
 
-    const userDoc = new userModel({ username });
+    const userDoc = new UserModel({ username });
 
     try {
       const { username, _id } = await userDoc.save();
@@ -39,6 +40,32 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
       console.error(err);
     }
 
+  });
+
+  app.get('/api/users', async (req, res) => {
+    const client = new MongoClient(dbUri);
+
+    try {
+      await client.connect();
+      try {
+        const dbName = dbUri.split('/').pop().split('?')[0];
+        const collectionName = UserModel.collection.name;
+        const db = client.db(dbName);
+        const collection = db.collection(collectionName);
+        
+        const documents = await collection.find().toArray();
+        const users = [];
+        for (const doc of documents) {
+          const { username, _id } = doc;
+          users.push({ username, _id });
+        }
+        res.json({ users });
+      } catch (err) {
+        console.error(`Error fetching documents from Collection ${collection}: ${err}`);
+      }
+    } catch (err) {
+      console.error(`Error connnecting to the client ${err}`);
+    }
   });
 
   const listener = app.listen(port, () => {
