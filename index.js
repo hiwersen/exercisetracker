@@ -52,14 +52,14 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
         const collectionName = UserModel.collection.name;
         const db = client.db(dbName);
         const collection = db.collection(collectionName);
-        
+
         const documents = await collection.find().toArray();
         const users = [];
         for (const doc of documents) {
           const { username, _id } = doc;
           users.push({ username, _id });
         }
-        res.json({ users });
+        res.json(users);
       } catch (err) {
         console.error(`Error fetching documents from Collection ${collection}: ${err}`);
       }
