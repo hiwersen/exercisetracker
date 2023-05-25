@@ -57,24 +57,24 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
 
  app.post('/api/users/:_id/exercises', async (req, res) => {
     const { _id: userId } = req.params;
-    let { description, duration, date } = req.body;
-
-    if (!date) {
-      date = new Date().toDateString();
-    } else {
-      const timestamp = Date.parse(date);
-      if (!timestamp) {
-        return res.send('Error: Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
-      } else {
-        date = new Date(timestamp).toDateString();
-      }
-    }
-
     try {
       const userDoc = await UserModel.findById(userId);
       if (!userDoc) {
-        return res.status(404).send(`No user found with _id: ${userId}`);
+        return res.status(404).send(`No user found with ID: ${userId}`);
       } else {
+        let { description, duration, date } = req.body;
+
+        if (!date) {
+          date = new Date().toDateString();
+        } else {
+          const timestamp = Date.parse(date);
+          if (!timestamp) {
+            return res.send('Error: Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
+          } else {
+            date = new Date(timestamp).toDateString();
+          }
+        }
+
         duration = parseInt(duration);
         const exerciseDoc = new ExerciseModel({ description, duration, date, userId });
         try {
@@ -87,11 +87,36 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
       }
     } catch (err) {
       console.error(err);
-      return res.status(500).send(`Error while fetching _id: ${err}`);
+      return res.status(500).send(`Error while fetching ID: ${err}`);
     }
   });
 
-  
+  app.get('/api/users/:_id/logs', async (req, res) => {
+    const { _id } = req.params;
+    try {
+      const userDoc = await UserModel.findById(_id);
+      if (!userDoc) {
+        return res.status(404).send(`No user found with ID: ${_id}`);
+      } else {
+        const { username } = userDoc;
+        try {
+          let exercises = await ExerciseModel.find({ userId: _id });
+          if (!exercises) {
+            return res.send(`No exercise found for user ID: ${_id}`);
+          } else {
+            const log = exercises.map(({ description, duration, date }) => ({ description, duration, date }));
+            const count = exercises.length;
+            
+            res.json({ username, count, _id, log })
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
 
   const listener = app.listen(port, () => {
     console.log('Listening on port ' + listener.address().port);
