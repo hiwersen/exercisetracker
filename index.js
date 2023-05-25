@@ -29,18 +29,18 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   // @see {@link https://www.npmjs.com/package/body-parser}
   app.use(bodyParser.urlencoded({ extended: false }));
 
-  app.post('/api/users', async (req, res) => {
+  app.route('/api/users')
+  .post(async (req, res) => {
     const { username } = req.body;
     const userDoc = new UserModel({ username });
     try {
       const { username, _id } = await userDoc.save();
       res.json({ username, _id });
     } catch (err) {
-      console.error(err);
+      return res.send(`Error creating the user ${username}: ${err}`);
     }
-  });
-
-  app.get('/api/users', async (req, res) => {
+  })
+  .get(async (req, res) => {
     try {
       const userDocuments = await UserModel.find();
       const users = [];
@@ -106,7 +106,7 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
           } else {
             const log = exercises.map(({ description, duration, date }) => ({ description, duration, date }));
             const count = exercises.length;
-            
+
             res.json({ username, count, _id, log })
           }
         } catch (err) {
