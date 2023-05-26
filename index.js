@@ -29,21 +29,22 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   // @see {@link https://www.npmjs.com/package/body-parser}
   app.use(bodyParser.urlencoded({ extended: false }));
 
-  const validateString = (str) => {
-    if (!str || typeof str !== 'string') return res.status(400).json({ message: `Invalid or missing ${str}` });
-    return str.trim();
+  const parseString = (str) => {
+    if (!str || typeof str !== 'string') return res.status(400).json({ message: `Invalid or missing string input` });
+    str.trim();
+    if (!str) return res.status(400).json({ message: 'string input value is empty' });
+    return str;
   };
 
-  const validateUsername = (req, res, next) => {
+  const parseUsername = (req, res, next) => {
     let { username } = req.body;
-    username = validateString(username);
-    if (!username) return res.status(400).json({ message: 'username is empty' });
+    username = parseString(username);
     req.body.username = username;
     next();
   };
 
   app.route('/api/users')
-  .post(validateUsername, async (req, res) => {
+  .post(parseUsername, async (req, res) => {
     let { username } = req.body;
     const user = new UserModel({ username });
     try {
@@ -64,19 +65,13 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
     }
   });
   
-  const validateExerciseInput = (req, res, next) => {
-
+  const parseExerciseInput = (req, res, next) => {
     let { _id } = req.params;
-    
-    _id = _id.trim();
+    _id = validateString(_id);
 
     let { description, duration, date } = req.body;
-
-    if (!description || typeof description !== 'string') return res.status(400).json({ message: 'Invalid or missing description' });
-    description = description.trim();
-    if (!description) return res.status(400).json({ message: 'description is empty' });
-
-    if (!duration || typeof duration !== 'string') return res.status(400).json({ message: 'Invalid or missing duration' });
+    description = validateString(description);
+    duration = validateString(duration);
     duration = parseInt(duration);
     if (Number.isNaN(duration)) return res.status(400).json({ message: 'duration is not a valid number' });
     
