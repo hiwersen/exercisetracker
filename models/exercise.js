@@ -11,7 +11,14 @@ const exerciseSchema = new Schema({
         type: Number,
         required: true,
     },
-    date: String,
+    date: {
+        type: Date,
+        default: Date.now,
+    },
+    dateString: {
+        type: String,
+        default: function() { return this.date.toDateString(); },
+    },
     userId: String,
 });
 
