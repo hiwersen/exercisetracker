@@ -15,12 +15,14 @@ const exerciseSchema = new Schema({
         type: Date,
         default: Date.now,
     },
-    dateString: {
-        type: String,
-        default: function() { return this.date.toDateString(); },
-    },
     userId: String,
 });
+
+// Create dateString virtual
+// Virtuals are not stored in the database, they're only present on the JavaScript side
+exerciseSchema.virtual('dateString').get(function() {
+    return this.date.toDateString();
+  });
 
 const ExerciseModel = mongoose.model('Exercise', exerciseSchema);
 

@@ -29,11 +29,18 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   // @see {@link https://www.npmjs.com/package/body-parser}
   app.use(bodyParser.urlencoded({ extended: false }));
 
-  app.route('/api/users')
-  .post(async (req, res) => {
+  const validateUsername = (req, res, next) => {
     let { username } = req.body;
+    if (!username|| typeof username !== 'string') return res.status(400).json({ message: 'Invalid or missing username' });
     username = username.trim();
-    if (!username) return res.status(400).json({ message: 'username not provided or empty' });
+    if (!username) return res.status(400).json({ message: 'username is empty' });
+    req.body.username = username;
+    next();
+  };
+
+  app.route('/api/users')
+  .post(validateUsername, async (req, res) => {
+    let { username } = req.body;
 
     const user = new UserModel({ username });
     try {
@@ -54,44 +61,54 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
     }
   });
 
-/**
  app.post('/api/users/:_id/exercises', async (req, res) => {
-    const { _id: userId } = req.params;
+    let { _id: userId } = req.params;
+
+    if (!userId || typeof userId !== 'string') return res.status(400).json({ message: 'Invalid or missing user ID' });
+    userId = userId.trim();
+
     try {
       const userDoc = await UserModel.findById(userId);
       if (!userDoc) {
-        return res.status(404).send(`No user found with ID: ${userId}`);
+        return res.status(404).send(`No user found with _id: ${userId}`);
       } else {
+        let exercise;
         let { description, duration, date } = req.body;
 
-        if (!date) {
-          date = new Date();
-          dateString = date.toDateString();
-        } else {
-          const timestamp = Date.parse(date);
-          if (!timestamp) {
-            return res.send('Error: Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
-          } else {
-            date = new Date(timestamp).toDateString();
-          }
-        }
+        description = description.trim();
+        if (!description) return res.status(400).json({ message: 'description not provided or empty' });
 
         duration = parseInt(duration);
-        const exerciseDoc = new ExerciseModel({ description, duration, date, userId });
+        if (Number.isNaN(duration)) return res.status(400).json({ message: 'duration is not a valid number' });
+        
+
+        if (date) {
+          date = Date.parse(date);
+          if (Number.isNaN(date)) {
+            return res.status(400).json({ message: 'Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format' });
+          } else {
+            exercise = new ExerciseModel({ userId, description, duration, date, });
+          }
+        } else {
+          exercise = new ExerciseModel({ userId, description, duration, });
+        } 
+
         try {
-          const { description, duration, date } = await exerciseDoc.save();
+          const { description, duration, dateString: date } = await exercise.save();
           const { username, _id } = userDoc;
           res.json({ username, description, duration, date, _id });
         } catch (err) {
           console.error(err);
+          return res.status(500).json({ message: `Error creating exercise` });
         }
       }
     } catch (err) {
       console.error(err);
-      return res.status(500).send(`Error while fetching ID: ${err}`);
+      return res.status(500).json({ message: `Error reading _id: ${userId}`});
     }
   });
 
+  /**
   app.get('/api/users/:_id/logs', async (req, res) => {
     const { _id } = req.params;
     try {
