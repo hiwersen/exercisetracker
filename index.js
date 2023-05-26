@@ -30,17 +30,22 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   app.use(bodyParser.urlencoded({ extended: false }));
 
   const parseString = (str) => {
-    if (!str || typeof str !== 'string') return res.status(400).json({ message: `Invalid or missing string input` });
-    str.trim();
-    if (!str) return res.status(400).json({ message: 'string input value is empty' });
+    if (!str || typeof str !== 'string') throw new Error('Invalid or missing string input value');
+    str = str.trim();
+    if (!str) throw new Error('Empty string input value');
     return str;
   };
 
   const parseUsername = (req, res, next) => {
-    let { username } = req.body;
-    username = parseString(username);
-    req.body.username = username;
-    next();
+    try {
+      let { username } = req.body;
+      username = parseString(username);
+      req.body.username = username;
+      next();
+    } catch (err) {
+      console.error(err);
+      return res.status(400).json({ message: err.message });
+    }
   };
 
   app.route('/api/users')
@@ -66,25 +71,30 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   });
   
   const parseExerciseInput = (req, res, next) => {
-    let { _id } = req.params;
-    _id = validateString(_id);
+    try {
+      let { _id } = req.params;
+      _id = parseString(_id);
 
-    let { description, duration, date } = req.body;
-    description = validateString(description);
-    duration = validateString(duration);
-    duration = parseInt(duration);
-    if (Number.isNaN(duration)) return res.status(400).json({ message: 'duration is not a valid number' });
-    
+      let { description, duration, date } = req.body;
+      description = parseString(description);
+      duration = parseString(duration);
+      duration = parseInt(duration);
+      if (Number.isNaN(duration)) throw new Error('duration is not a valid number');
 
-    if (date) {
-      date = Date.parse(date);
-      if (Number.isNaN(date)) {
-        return res.status(400).json({ message: 'Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format' });
+      if (date) {
+        date = parseString(date);
+        date = Date.parse(date);
+        if (Number.isNaN(date)) throw new Error('Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
       }
+      
+      req.params._id = _id;
+      Object.assign(req.body, { description, duration, date });
+      next();
 
-
-
-    next();
+    } catch (err) {
+      console.error(err);
+      return res.status(400).json({ message: err.message });
+    }
   };
 
   app.post('/api/users/:_id/exercises', async (req, res) => {
