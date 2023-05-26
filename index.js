@@ -97,35 +97,25 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
     }
   };
 
-  app.post('/api/users/:_id/exercises', async (req, res) => {
+  app.post('/api/users/:_id/exercises', parseExerciseInput, async (req, res) => {
     let { _id: userId } = req.params;
 
     try {
       const userDoc = await UserModel.findById(userId);
       if (!userDoc) {
-        return res.status(404).send(`No user found with _id: ${userId}`);
+        return res.status(404).json({ message: `No user found with _id: ${userId}` });
       } else {
+        const { description, duration, date } = req.body;
         let exercise;
-        let { description, duration, date } = req.body;
-
-        description = description.trim();
-        if (!description) return res.status(400).json({ message: 'description not provided or empty' });
-
-        duration = parseInt(duration);
-        if (Number.isNaN(duration)) return res.status(400).json({ message: 'duration is not a valid number' });
-        
 
         if (date) {
-          date = Date.parse(date);
-          if (Number.isNaN(date)) {
-            return res.status(400).json({ message: 'Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format' });
-          } else {
-            exercise = new ExerciseModel({ userId, description, duration, date, });
-          }
+          exercise =  new ExerciseModel({ userId, description, duration, date, });
+        } else if (date === '') {
+          exercise = new ExerciseModel({ userId, description, duration, })
         } else {
-          exercise = new ExerciseModel({ userId, description, duration, });
-        } 
-
+          return res.status(400).json({ message: 'Unrecognized date data content' });
+        }
+        
         try {
           const { description, duration, dateString: date } = await exercise.save();
           const { username, _id } = userDoc;
@@ -141,9 +131,9 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
     }
   });
 
-  /**
   app.get('/api/users/:_id/logs', async (req, res) => {
     const { _id } = req.params;
+    
     try {
       const userDoc = await UserModel.findById(_id);
       if (!userDoc) {
@@ -188,7 +178,7 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
       console.error(err);
     }
   });
-*/
+
   const listener = app.listen(port, () => {
     console.log('Listening on port ' + listener.address().port);
   });
