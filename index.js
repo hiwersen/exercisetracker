@@ -29,10 +29,14 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   // @see {@link https://www.npmjs.com/package/body-parser}
   app.use(bodyParser.urlencoded({ extended: false }));
 
+  const validateString = (str) => {
+    if (!str || typeof str !== 'string') return res.status(400).json({ message: `Invalid or missing ${str}` });
+    return str.trim();
+  };
+
   const validateUsername = (req, res, next) => {
     let { username } = req.body;
-    if (!username|| typeof username !== 'string') return res.status(400).json({ message: 'Invalid or missing username' });
-    username = username.trim();
+    username = validateString(username);
     if (!username) return res.status(400).json({ message: 'username is empty' });
     req.body.username = username;
     next();
@@ -41,7 +45,6 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   app.route('/api/users')
   .post(validateUsername, async (req, res) => {
     let { username } = req.body;
-
     const user = new UserModel({ username });
     try {
       const { username, _id } = await user.save();
@@ -60,12 +63,37 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
       return res.status(500).json({ message: `Error reading list of users` });
     }
   });
+  
+  const validateExerciseInput = (req, res, next) => {
 
- app.post('/api/users/:_id/exercises', async (req, res) => {
+    let { _id } = req.params;
+    
+    _id = _id.trim();
+
+    let { description, duration, date } = req.body;
+
+    if (!description || typeof description !== 'string') return res.status(400).json({ message: 'Invalid or missing description' });
+    description = description.trim();
+    if (!description) return res.status(400).json({ message: 'description is empty' });
+
+    if (!duration || typeof duration !== 'string') return res.status(400).json({ message: 'Invalid or missing duration' });
+    duration = parseInt(duration);
+    if (Number.isNaN(duration)) return res.status(400).json({ message: 'duration is not a valid number' });
+    
+
+    if (date) {
+      date = Date.parse(date);
+      if (Number.isNaN(date)) {
+        return res.status(400).json({ message: 'Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format' });
+      }
+
+
+
+    next();
+  };
+
+  app.post('/api/users/:_id/exercises', async (req, res) => {
     let { _id: userId } = req.params;
-
-    if (!userId || typeof userId !== 'string') return res.status(400).json({ message: 'Invalid or missing user ID' });
-    userId = userId.trim();
 
     try {
       const userDoc = await UserModel.findById(userId);
