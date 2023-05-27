@@ -99,7 +99,7 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
 
   app.post('/api/users/:_id/exercises', parseExerciseInput, async (req, res) => {
     let { _id: userId } = req.params;
-
+    
     try {
       const userDoc = await UserModel.findById(userId);
       if (!userDoc) {
@@ -131,51 +131,93 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
     }
   });
 
-  app.get('/api/users/:_id/logs', async (req, res) => {
+  const parseLogsInput = (req, res, next) => {
     const { _id } = req.params;
+    let { from, to, limit } = req.query;
+    const DEFAULT_LIMIT = 20;
+    const MAX_LIMIT = 50;
+    const parsedLimit = parseInt(limit);
+    const parsedFrom = Date.parse(from);
+    const parsedTo = Date.parse(to);
+
+    if (!mongoose.Types.ObjectId.isValid(_id)) return res.status(400).json({ message: 'Invalid _id' });
+
+    if (limit !== undefined && Number.isNaN(parsedLimit)) {
+      return res.status(400).json({ message: 'Invalid limit' });
+    } else if (parsedLimit > MAX_LIMIT) {
+      return res.status(400).json({ message: `Limit cannot exceed ${MAX_LIMIT}` });
+    } else {
+      limit = limit && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
+    }
+
+    if (parsedFrom > parsedTo) {
+      return res.status(400).json({ message: `'from' cannot be greater than 'to'` });
+    } else {
+      if (from !== undefined && Number.isNaN(parsedFrom)) {
+        return res.status(400).json({ message: 'Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format' });
+      } else {
+        from = from && parsedFrom;
+      }
+  
+      if (to !== undefined && Number.isNaN(parsedTo)) {
+        return res.status(400).json({ message: 'Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format' });
+      } else {
+        to = to && parsedTo;
+      }
+    }
     
+    Object.assign(req.query, { from, to, limit });
+
+    next();
+  };
+
+  app.get('/api/users/:_id/logs', parseLogsInput, async (req, res) => {
+    const { _id } = req.params;
     try {
       const userDoc = await UserModel.findById(_id);
       if (!userDoc) {
         return res.status(404).send(`No user found with ID: ${_id}`);
       } else {
         const { username } = userDoc;
-
         let { from, to, limit } = req.query;
+        let findQuery;
 
-        if (limit && isNaN(parseInt(limit))) {
-          return res.send('Invalid Number');
+        if (from && to) {
+          findQuery = { userId: _id, date: { $gte: from, $lte: to } };
+        } else if (from) {
+          findQuery = { userId: _id, date: { $gte: from } };
+        } else if (to) {
+          findQuery = { userId: _id, date: { $lte: to } };
         } else {
-          limit = limit ? parseInt(limit) : limit;
+          findQuery = { userId: _id };
         }
-
-        const timestampFrom = Date.parse(from);
-        const timestampTo = Date.parse(to);
-        if ((from && !timestampFrom) || (to && !timestampTo)) {
-          return res.send('Error: Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
-        } else {
-          from = from ? timestampFrom : 0;
-          to = to ? timestampTo : Date.now();
-        }
-
+        
         try {
           let log = await ExerciseModel
-          .find({ userId: _id, date: { $gte: from, $lte: to } })
+          .find(findQuery)
+          .sort({ date: -1 })
           .limit(limit)
-          .select('description duration date -_id');
+          .select('description duration dateString -_id');
 
-          if (!log) {
-            return res.send(`No exercise found for user ID: ${_id}`);
+          if (log.length === 0) {
+            return res.status(400).json({ message: `No exercise found for user ID: ${_id}` });
           } else {
+            log = log.map(doc => {
+              const newDoc = { ...doc._doc, date: doc.dateString };
+              delete newDoc.dateString;
+              return newDoc;
+            });
             const count = log.length;
             res.json({ username, count, _id, log });
           }
         } catch (err) {
           console.error(err);
+          return res.status(500).json({ message: 'Error reading exercise list'});
         }
       }
     } catch (err) {
       console.error(err);
+      return res.status(500).json({ message: `Error reading _id: ${_id}`});
     }
   });
 
