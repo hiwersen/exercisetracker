@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const { Schema } = mongoose;
 
 const exerciseSchema = new Schema({
@@ -21,6 +20,7 @@ const exerciseSchema = new Schema({
 // Create dateString virtual
 // Virtuals are not stored in the database, they're only present on the JavaScript side
 exerciseSchema.virtual('dateString').get(function() {
+    console.log(this.date);
     return this.date.toDateString();
   });
 

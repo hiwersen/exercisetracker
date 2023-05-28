@@ -165,7 +165,6 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
         to = to && parsedTo;
       }
     }
-    
     Object.assign(req.query, { from, to, limit });
 
     next();
