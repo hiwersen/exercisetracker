@@ -2,12 +2,12 @@ require('dotenv').config();
 const { MongoClient } = require('mongodb');
 
 // Specify and Import the Model file name, then get the collection name
-const modelFileName = 'url';
+const modelFileName = 'exercise';
 const Model = require(`../models/${modelFileName}`);
 const collectionName = Model.collection.name;
 
 // Specify the DB URI, then get the DB name
-const dbUri = require('..index');
+const dbUri = require('../index');
 const dbName = dbUri.split('/').pop().split('?')[0];
 
 // Log specified collection from specified DB

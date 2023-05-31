@@ -8,7 +8,7 @@ const ExerciseModel = require('./models/exercise');
 require('dotenv').config();
 
 const port = process.env.PORT || 3000;
-const dbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/execiseTracker';
+const dbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/exerciseTracker';
 
 const app = express();
 
@@ -224,3 +224,6 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
     console.log('Listening on port ' + listener.address().port);
   });
 }).catch(err => console.error(`Error connnecting to the database ${err}`));
+
+
+module.exports = dbUri;
