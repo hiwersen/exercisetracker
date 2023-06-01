@@ -7,7 +7,7 @@ const Model = require(`../models/${modelFileName}`);
 const collectionName = Model.collection.name;
 
 // Specify the DB URI, then get the DB name
-const dbUri = require('../index');
+const { dbUri } = require('../index');
 const dbName = dbUri.split('/').pop().split('?')[0];
 
 // Log specified collection from specified DB
@@ -22,6 +22,8 @@ const dbName = dbUri.split('/').pop().split('?')[0];
             for (const doc of documents) {
                 console.log(doc); 
             }
+            
+            console.log('Number of documents: ', documents.length);
         } catch (error) {
             console.error(`Error fetching collection ${collectionName} - ERROR: ${error}`);
         }

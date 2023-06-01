@@ -1,11 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const UserModel = require('./models/user');
 const ExerciseModel = require('./models/exercise');
-
-require('dotenv').config();
 
 const port = process.env.PORT || 3000;
 const dbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/exerciseTracker';
@@ -20,10 +19,12 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
 
-mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
+const connect = () => mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+connect()
 .then(() => {
   const dbName = mongoose.connection.name;
-  console.log(`Connected to the database ${dbName}`);
+  console.log(`Connected to the database ${dbName} - index.js`);
 
   // parse application/x-www-form-urlencoded
   // @see {@link https://www.npmjs.com/package/body-parser}
@@ -42,9 +43,9 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
       username = parseString(username);
       req.body.username = username;
       next();
-    } catch (err) {
-      console.error(err);
-      return res.status(400).json({ message: err.message });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message });
     }
   };
 
@@ -55,8 +56,8 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
     try {
       const { username, _id } = await user.save();
       return res.json({ username, _id });
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       return res.status(500).json({ message: `Error creating the user ${username}` });
     }
   })
@@ -64,8 +65,8 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
     try {
       const users = await UserModel.find().select('username');
       return res.json(users);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       return res.status(500).json({ message: `Error reading list of users` });
     }
   });
@@ -91,9 +92,9 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
       Object.assign(req.body, { description, duration, date });
       next();
 
-    } catch (err) {
-      console.error(err);
-      return res.status(400).json({ message: err.message });
+    } catch (error) {
+      console.error(error);
+      return res.status(400).json({ message: error.message });
     }
   };
 
@@ -120,13 +121,13 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
           const { description, duration, dateString: date } = await exercise.save();
           const { username, _id } = userDoc;
           res.json({ username, description, duration, date, _id });
-        } catch (err) {
-          console.error(err);
+        } catch (error) {
+          console.error(error);
           return res.status(500).json({ message: `Error creating exercise` });
         }
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       return res.status(500).json({ message: `Error reading _id: ${userId}`});
     }
   });
@@ -209,13 +210,13 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
             const count = log.length;
             res.json({ username, count, _id, log });
           }
-        } catch (err) {
-          console.error(err);
+        } catch (error) {
+          console.error(error);
           return res.status(500).json({ message: 'Error reading exercise list'});
         }
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       return res.status(500).json({ message: `Error reading _id: ${_id}`});
     }
   });
@@ -223,7 +224,7 @@ mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
   const listener = app.listen(port, () => {
     console.log('Listening on port ' + listener.address().port);
   });
-}).catch(err => console.error(`Error connnecting to the database ${err}`));
+}).catch(error => console.error(`Error connnecting to the database ${error} - index.js`));
 
 
-module.exports = dbUri;
+module.exports = { dbUri, connect };
