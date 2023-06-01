@@ -176,7 +176,7 @@ connect()
     try {
       const userDoc = await UserModel.findById(_id);
       if (!userDoc) {
-        return res.status(404).send(`No user found with ID: ${_id}`);
+        return res.status(404).json({ message: `No user found with ID: ${_id}` });
       } else {
         const { username } = userDoc;
         let { from, to, limit } = req.query;
