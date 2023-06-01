@@ -20,7 +20,7 @@ const { connect } = require('../index');
                         try {
                             // Sequential execution: 
                             // wait for each operation to complete before moving on to the next document in the loop
-                            await ExerciseModel.updateOne({ _id: exercise._id }, { $set: { date: newDate } });
+                            await ExerciseModel.updateOne({ _id: exercise._id }, { $set: { date: new Date(newDate)} });
                         } catch (error) {
                             console.error(`Error updating document ${exercise} to database`, error);
                         }

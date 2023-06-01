@@ -31,9 +31,9 @@ connect()
   app.use(bodyParser.urlencoded({ extended: false }));
 
   const parseString = (str) => {
-    if (!str || typeof str !== 'string') throw new Error('Invalid or missing string input value');
+    if (typeof str !== 'string') throw new Error('Input value is not string');
     str = str.trim();
-    if (!str) throw new Error('Empty string input value');
+    if (str === '') throw new Error('Input value is empty character string');
     return str;
   };
 
@@ -64,7 +64,11 @@ connect()
   .get(async (req, res) => {
     try {
       const users = await UserModel.find().select('username');
-      return res.json(users);
+      if (users.length === 0) {
+        return res.status(404).json({ message: `No user found in the database` });
+      } else {
+        return res.json(users);
+      }
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: `Error reading list of users` });
@@ -85,7 +89,11 @@ connect()
       if (date) {
         date = parseString(date);
         date = Date.parse(date);
-        if (Number.isNaN(date)) throw new Error('Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
+        if (Number.isNaN(date)) {
+          throw new Error('Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format');
+        } else {
+          date = new Date(date);
+        }
       }
       
       req.params._id = _id;
@@ -109,7 +117,7 @@ connect()
         const { description, duration, date } = req.body;
         let exercise;
 
-        if (date) {
+        if (date instanceof Date) {
           exercise =  new ExerciseModel({ userId, description, duration, date, });
         } else if (date === '') {
           exercise = new ExerciseModel({ userId, description, duration, })
@@ -118,9 +126,9 @@ connect()
         }
         
         try {
-          const { description, duration, dateString: date } = await exercise.save();
+          const { description, duration, dateString } = await exercise.save();
           const { username, _id } = userDoc;
-          res.json({ username, description, duration, date, _id });
+          res.json({ username, description, duration, date: dateString, _id });
         } catch (error) {
           console.error(error);
           return res.status(500).json({ message: `Error creating exercise` });
@@ -148,24 +156,20 @@ connect()
     } else if (parsedLimit > MAX_LIMIT) {
       return res.status(400).json({ message: `limit cannot exceed ${MAX_LIMIT}` });
     } else {
-      limit = limit && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
+      limit = limit && (parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT);
     }
 
     if (parsedFrom > parsedTo) {
       return res.status(400).json({ message: `'from' cannot be greater than 'to'` });
     } else {
-      if (from !== undefined && Number.isNaN(parsedFrom)) {
+      if ((from !== undefined && Number.isNaN(parsedFrom)) || (to !== undefined && Number.isNaN(parsedTo))) {
         return res.status(400).json({ message: 'Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format' });
       } else {
         from = from && parsedFrom;
-      }
-  
-      if (to !== undefined && Number.isNaN(parsedTo)) {
-        return res.status(400).json({ message: 'Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format' });
-      } else {
         to = to && parsedTo;
       }
     }
+
     Object.assign(req.query, { from, to, limit });
 
     next();
@@ -203,15 +207,15 @@ connect()
           let log = await ExerciseModel
           .find(findQuery)
           .sort({ date: -1 })
-          .limit(limit);
-          //.select('description duration dateString -_id');
+          .limit(limit)
+          .select('description duration date -_id');
 
           if (log.length === 0) {
             return res.status(400).json({ message });
           } else {
             log = log.map(doc => {
-              const newDoc = { ...doc._doc, date: doc.dateString };
-              delete newDoc.dateString;
+              const newDoc = { ...doc._doc };
+              newDoc.date = newDoc.date.toDateString();
               return newDoc;
             });
             const count = log.length;

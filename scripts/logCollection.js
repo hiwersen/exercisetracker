@@ -20,9 +20,14 @@ const dbName = dbUri.split('/').pop().split('?')[0];
         try {
             const documents = await collection.find().toArray();
             for (const doc of documents) {
-                console.log(doc); 
+
+                // Define logs here:
+                console.log(doc);
+                console.log(doc.date);
+                console.log(typeof doc.date);
+                console.log(doc.date.toDateString());
+                console.log(typeof doc.date.toDateString());
             }
-            
             console.log('Number of documents: ', documents.length);
         } catch (error) {
             console.error(`Error fetching collection ${collectionName} - ERROR: ${error}`);
