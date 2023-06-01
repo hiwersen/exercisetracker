@@ -180,33 +180,34 @@ connect()
       } else {
         const { username } = userDoc;
         let { from, to, limit } = req.query;
+        
+        let message = `No exercise found with criteria - ID: ${_id}`;
         let findQuery;
 
         if (from && to) {
           findQuery = { userId: _id, date: { $gte: from, $lte: to } };
+          message += ` - from: ${new Date(from).toDateString()} - to: ${new Date(to).toDateString()}`;
         } else if (from) {
           findQuery = { userId: _id, date: { $gte: from } };
+          message += ` - from: ${new Date(from).toDateString()}`;
         } else if (to) {
           findQuery = { userId: _id, date: { $lte: to } };
+          message += ` - to: ${new Date(to).toDateString()}`;
         } else {
           findQuery = { userId: _id };
         }
+
+        if (limit) message += ` - limit: ${limit}`;
         
         try {
           let log = await ExerciseModel
           .find(findQuery)
           .sort({ date: -1 })
-          .limit(limit)
-          .select('description duration dateString -_id');
+          .limit(limit);
+          //.select('description duration dateString -_id');
 
           if (log.length === 0) {
-            return res.status(400).json({ 
-              message: `No exercise found with criteria:
-              ID: ${_id}
-              from: ${from && new Date(from).toDateString()}
-              to: ${to && new Date(to).toDateString()}
-              limit: ${limit}` 
-            });
+            return res.status(400).json({ message });
           } else {
             log = log.map(doc => {
               const newDoc = { ...doc._doc, date: doc.dateString };
