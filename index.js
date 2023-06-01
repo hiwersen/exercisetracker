@@ -141,12 +141,12 @@ connect()
     const parsedFrom = Date.parse(from);
     const parsedTo = Date.parse(to);
 
-    if (!mongoose.Types.ObjectId.isValid(_id)) return res.status(400).json({ message: 'Invalid _id' });
+    if (!mongoose.Types.ObjectId.isValid(_id)) return res.status(400).json({ message: `Invalid _id: ${_id}` });
 
     if (limit !== undefined && Number.isNaN(parsedLimit)) {
-      return res.status(400).json({ message: 'Invalid limit' });
+      return res.status(400).json({ message: `Invalid limit: ${limit}` });
     } else if (parsedLimit > MAX_LIMIT) {
-      return res.status(400).json({ message: `Limit cannot exceed ${MAX_LIMIT}` });
+      return res.status(400).json({ message: `limit cannot exceed ${MAX_LIMIT}` });
     } else {
       limit = limit && parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT;
     }
@@ -200,7 +200,13 @@ connect()
           .select('description duration dateString -_id');
 
           if (log.length === 0) {
-            return res.status(400).json({ message: `No exercise found for user ID: ${_id}` });
+            return res.status(400).json({ 
+              message: `No exercise found with criteria:
+              ID: ${_id}
+              from: ${from && new Date(from).toDateString()}
+              to: ${to && new Date(to).toDateString()}
+              limit: ${limit}` 
+            });
           } else {
             log = log.map(doc => {
               const newDoc = { ...doc._doc, date: doc.dateString };
@@ -217,7 +223,7 @@ connect()
       }
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: `Error reading _id: ${_id}`});
+      return res.status(500).json({ message: `Error reading user _id: ${_id}`});
     }
   });
 
