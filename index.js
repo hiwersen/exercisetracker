@@ -119,8 +119,8 @@ connect()
 
         if (date instanceof Date) {
           exercise =  new ExerciseModel({ userId, description, duration, date, });
-        } else if (date === '') {
-          exercise = new ExerciseModel({ userId, description, duration, })
+        } else if (date === '' || date === undefined) {
+          exercise = new ExerciseModel({ userId, description, duration, });
         } else {
           return res.status(400).json({ message: 'Unrecognized date data content' });
         }
