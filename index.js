@@ -378,7 +378,7 @@ connect()
    * it sends a JSON response with a 400 status code and an error message.
    */
   const parseLogsInput = (req, res, next) => {
-    const { _id } = req.params;
+    let { _id } = req.params;
 
     try {
       _id = parseId(parseString(_id));
