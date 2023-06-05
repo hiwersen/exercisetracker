@@ -48,17 +48,17 @@ connect()
   app.use(bodyParser.urlencoded({ extended: false }));
 
   /**
-   * Validate a value as a string and trims white spaces.
+   * Validates a value as a string and trims white spaces.
    *
    * This function:
-   * - throws an error if the input is not of string type;
-   * - trims leading and trailing white spaces;
-   * - throws an error if the input is an empty string after trimming;
-   * - returns the treated string.
+   * - throws an error if the input is not a string type;
+   * - trims leading and trailing white spaces from the string;
+   * - throws an error if the input becomes an empty string after trimming;
+   * - returns the trimmed string.
    * 
-   * @param {String} str Value to be checked.
-   * @returns {String} Trimmed and validated string.
-   * @throws {Error} When the input value is not of string type or is an empty string.
+   * @param {String} str The value to be validated.
+   * @returns {String} The trimmed and validated string.
+   * @throws {Error} When the input value is not of string type or becomes an empty string after trimming.
    */
   const parseString = str => {
     if (typeof str !== 'string') throw new Error('Input value is not string');
@@ -68,11 +68,11 @@ connect()
   };
 
   /**
-   * Validate ID as valid MongoDB ObjectID format.
+   * Validates whether an ID adheres to the MongoDB ObjectID format.
    * 
-   * @param {String} _id ID to be validated.
-   * @returns {String} Validated ID.
-   * @throws {Error} When the ID is not a valid MongoDB ObjectID format.
+   * @param {String} _id The ID to be validated.
+   * @returns {String} The validated ID.
+   * @throws {Error} When the ID does not conform to a valid MongoDB ObjectID format.
    */
   const parseId = _id => {
     if (!mongoose.Types.ObjectId.isValid(_id)) throw new Error(`Invalid ID: ${_id}`);
@@ -80,19 +80,19 @@ connect()
   };
 
   /**
-   * Middleware to validate the usersname input field for the POST api/users route 
+   * Middleware to validate the username input field for the POST api/users route 
    *
    * This function:
-   * - checks if the username is of string data type
+   * - checks if the username is a string data type
    * - trims leading and trailing white spaces from the username, if present
-   * - saves the trimmed username back into the req.body object
+   * - assigns the trimmed username back into the req.body object
    * - calls the next middleware if the username is valid
    * - sends a JSON response with an error message if the username is invalid
    * 
    * @param {Object} req The Express request object.
    * @param {Object} res The Express response object.
    * @param {Function} next The next middleware function.
-   * @throws {Error} When the username is not of string type or is an empty string after trimming.
+   * @throws {Error} When the username is not a string or becomes an empty string after trimming.
    */
   const parseUsername = (req, res, next) => {
     try {
@@ -106,7 +106,7 @@ connect()
   };
 
   /**
-   * @api {post} /api/users Create new user
+   * @api {post} /api/users Creates a new user
    * @apiName CreateUser
    * @apiGroup User
    * 
@@ -122,7 +122,7 @@ connect()
    *       "_id": "647885afc7da74ce5419854d"
    *     }
    * 
-   * @apiError (500) {String} message The error message when creating the new user
+   * @apiError (500) {String} message The error message when the error occurs while creating the user
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 500 Internal Server Error
@@ -141,18 +141,18 @@ connect()
       const { username, _id } = await user.save();
       return res.json({ username, _id });
     } catch (error) {
-      return res.status(500).json({ message: `Error creating the user: ${username}` });
+      return res.status(500).json({ message: `Error while creating the user: ${username}` });
     }
   })
 
   /**
-   * @api {get} /api/users Return list of all users
-   * @apiName ReturnUsers
+   * @api {get} /api/users Returns a list of all users
+   * @apiName GetUsers
    * @apiGroup User
    *
    * @apiSuccess {Object[]} users The list of all users
-   * @apiSuccess {String} users.username The username of the users
-   * @apiSuccess {String} users._id The ID of the users
+   * @apiSuccess {String} users.username The username of each user
+   * @apiSuccess {String} users._id The ID of each user
    * 
    * @apiSuccessExample {json} Success-Response:
    *     HTTP/1.1 200 OK
@@ -167,15 +167,15 @@ connect()
    *        }
    *     ]
    * 
-   * @apiError (404) {String} message The error message when there is no user to be returned
+   * @apiError (404) {String} message The error message when there are no users to be returned
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 404 Not Found
    *     {
-   *       "message": "No user found in the database"
+   *       "message": "No users found in the database"
    *     }
    * 
-   * @apiError (500) {String} message The error message when fetching the users
+   * @apiError (500) {String} message The error message when the error occurs while fetching the users
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 500 Internal Server Error
@@ -187,12 +187,12 @@ connect()
     try {
       const users = await UserModel.find().select('username');
       if (users.length === 0) {
-        return res.status(404).json({ message: `No user found in the database` });
+        return res.status(404).json({ message: `No users found in the database` });
       } else {
         return res.json(users);
       }
     } catch (error) {
-      return res.status(500).json({ message: `Error reading list of users` });
+      return res.status(500).json({ message: `Error while reading list of users` });
     }
   });
   
@@ -200,20 +200,20 @@ connect()
    * Middleware to validate parameters for the POST /api/users/:_id/exercises route 
    *
    * This function:
-   * - checks if the _id, description, duration, and date are of string data type
+   * - checks if the _id, description, duration, and date are string data types
    * - trims leading and trailing white spaces from those strings
-   * - checks if the _id is a valid MongoDB ObjectID format
-   * - parses the duration string value into Number data type
-   * - parses the date string value into Date object
-   * - assignes the parsed _id back into req.params object
-   * - assignes the parsed description, duration, and date back into the req.body object
+   * - checks whether the _id conforms to the MongoDB ObjectID format
+   * - parses the duration string value into a Number data type
+   * - parses the date string value into a Date object
+   * - assignes the validated _id back into the req.params object
+   * - assignes the validated description, duration, and date back into the req.body object
    * 
    * @param {Object} req The Express request object.
    * @param {Object} res The Express response object.
    * @param {Function} next The next middleware function.
-   * @throws {Error} When the parameters (_id, description, duration, or date) are not of string type, 
-   * are empty strings after trimming, the duration or date can't be parsed into number or date respectively, 
-   * or the _id is not a valid MongoDB ObjectId.
+   * @throws {Error} When the parameters (_id, description, duration, or date) are not strings, 
+   * become empty strings after trimming, the duration or date can't be parsed into number or date respectively, 
+   * or the _id does not conforme to a valid MongoDB ObjectId format.
    * @returns {undefined} Calls the next middleware function in the absence of errors. If an error is thrown, 
    * it sends a JSON response with a 400 status code and an error message.
    */
@@ -248,81 +248,81 @@ connect()
   };
 
   /**
-     * @api {post} /api/users/:_id/exercises Create exercise for a user
-     * @apiName CreateExercise
-     * @apiGroup Exercise
-     * 
-     * @apiParam  {String} _id The ID of the user
-     * @apiParam  {String} description The exercise description
-     * @apiParam  {Number} duration The exercise duration in minutes
-     * @apiParam  {String} [date] The exercise date in "yyyy-mm-dd" format (Optional)
-     *
-     * @apiSuccess {String} username The username of the user
-     * @apiSuccess {String} description The created exercise description
-     * @apiSuccess {Number} duration The created exercise duration in minutes
-     * @apiSuccess {String} date The created exercise date string in "Weekday Month Day Year" format
-     * @apiSuccess {String} _id The ID of the user
-     * 
-     * @apiSuccessExample {json} Success-Response:
-     *     HTTP/1.1 200 OK
-     *     {
-     *       "username": "Test",
-     *       "description": "Exercise description",
-     *       "duration": 60,
-     *       "date": "Sat Jun 03 2023"
-     *       "_id": "647885afc7da74ce5419854d"
-     *     }    
-     * 
-     * @apiError (404) {String} message The error message when no user is found with the _id
-     * 
-     * @apiErrorExample {json} Error-Response:
-     *     HTTP/1.1 404 Not Found
-     *     {
-     *       "message": "No user found with _id: 647885afc7da74ce5419854d"
-     *     }
-     * 
-     * @apiError (400) {String} message The error message when the date data is unexpected
-     * 
-     * @apiErrorExample {json} Error-Response:
-     *     HTTP/1.1 400 Bad Request
-     *     {
-     *       "message": "Unrecognized date data content"
-     *     }
-     * 
-     * @apiError (500) {String} message The error message when creating the new exercise 
-     * or when fetching the user ID
-     * 
-     * @apiErrorExample {json} Error-Response:
-     *     HTTP/1.1 500 Internal Server Error
-     *     {
-     *       "message": "Error creating exercise"
-     *     }
-     * 
-     * @apiErrorExample {json} Error-Response:
-     *     HTTP/1.1 500 Internal Server Error
-     *     {
-     *       "message": "Error reading _id: 647885afc7da74ce5419854d"
-     *     }
-     * 
-     * @apiError (400) {String} message The error message when duration can't be parsed into Number data type
-     * 
-     * @apiErrorExample {json} Error-Response:
-     *     HTTP/1.1 400 Bad Request
-     *     {
-     *       "message": "duration is not a valid number"
-     *     }
-     * 
-     * @apiError (400) {String} message The error message when the date can't be parsed into Date Object
-     * 
-     * @apiErrorExample {json} Error-Response:
-     *     HTTP/1.1 400 Bad Request
-     *     {
-     *       "message": "Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format"
-     *     }
-     * 
-     * @apiError (Common) Refer to [Common Errors](../COMMON_ERRORS.md) document 
-     * for common errors that can occur with this endpoint.
-     */ 
+   * @api {post} /api/users/:_id/exercises Creates exercise for a user
+   * @apiName CreateExercise
+   * @apiGroup Exercise
+   * 
+   * @apiParam  {String} _id The ID of the user
+   * @apiParam  {String} description The description of the exercise
+   * @apiParam  {Number} duration The duration fo the exercise in minutes
+   * @apiParam  {String} [date] The date of the exercise in "yyyy-mm-dd" format (Optional)
+   *
+   * @apiSuccess {String} username The username of the user
+   * @apiSuccess {String} description The description of the created exercise
+   * @apiSuccess {Number} duration The duration of the created exercise in minutes
+   * @apiSuccess {String} date The date of the created exercise in "Weekday Month Day Year" format
+   * @apiSuccess {String} _id The ID of the user
+   * 
+   * @apiSuccessExample {json} Success-Response:
+   *     HTTP/1.1 200 OK
+   *     {
+   *       "username": "Test",
+   *       "description": "Exercise description",
+   *       "duration": 60,
+   *       "date": "Sat Jun 03 2023"
+   *       "_id": "647885afc7da74ce5419854d"
+   *     }    
+   * 
+   * @apiError (404) {String} message The error message when no user is found with the _id
+   * 
+   * @apiErrorExample {json} Error-Response:
+   *     HTTP/1.1 404 Not Found
+   *     {
+   *       "message": "No user found with _id: 647885afc7da74ce5419854d"
+   *     }
+   * 
+   * @apiError (400) {String} message The error message when the date data is unexpected
+   * 
+   * @apiErrorExample {json} Error-Response:
+   *     HTTP/1.1 400 Bad Request
+   *     {
+   *       "message": "Unrecognized date data content"
+   *     }
+   * 
+   * @apiError (500) {String} message The error message while creating the new exercise 
+   * or while fetching the user ID
+   * 
+   * @apiErrorExample {json} Error-Response:
+   *     HTTP/1.1 500 Internal Server Error
+   *     {
+   *       "message": "Error while creating exercise"
+   *     }
+   * 
+   * @apiErrorExample {json} Error-Response:
+   *     HTTP/1.1 500 Internal Server Error
+   *     {
+   *       "message": "Error while reading _id: 647885afc7da74ce5419854d"
+   *     }
+   * 
+   * @apiError (400) {String} message The error message when duration cannot be parsed into a Number data type
+   * 
+   * @apiErrorExample {json} Error-Response:
+   *     HTTP/1.1 400 Bad Request
+   *     {
+   *       "message": "duration is not a valid number"
+   *     }
+   * 
+   * @apiError (400) {String} message The error message when the date cannot be parsed into a Date Object
+   * 
+   * @apiErrorExample {json} Error-Response:
+   *     HTTP/1.1 400 Bad Request
+   *     {
+   *       "message": "Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format"
+   *     }
+   * 
+   * @apiError (Common) Refer to [Common Errors](../COMMON_ERRORS.md) document 
+   * for common errors that can occur with this endpoint.
+   */ 
   app.post('/api/users/:_id/exercises', parseExerciseInput, async (req, res) => {
     let { _id: userId } = req.params;
     
@@ -347,11 +347,11 @@ connect()
           const { username, _id } = userDoc;
           res.json({ username, description, duration, date: dateString, _id });
         } catch (error) {
-          return res.status(500).json({ message: `Error creating exercise` });
+          return res.status(500).json({ message: `Error while creating exercise` });
         }
       }
     } catch (error) {
-      return res.status(500).json({ message: `Error reading _id: ${userId}`});
+      return res.status(500).json({ message: `Error while reading _id: ${userId}`});
     }
   });
 
@@ -359,21 +359,21 @@ connect()
    * Middleware to validate parameters for the POST /api/users/:_id/logs route 
    *
    * This function:
-   * - checks if the _id is of string data type, and trims leading and trailing white spaces
-   * - checks if the _id is a valid MongoDB ObjectID format
-   * - parses the "from" and "to" date string into Date object
-   * - parses the "limit" string into Number data type
-   * - assigns a DEFAULT_LIMIT value to "limit" when the defined value is 0 or negative number
-   * - assignes the parsed _id back into req.params object
-   * - assignes the "parsedFrom", "parsedTo", and "parsedLimit" to the req.body object
+   * - checks if the _id is a string, and trims leading and trailing white spaces
+   * - checks whether the _id conforms to the MongoDB ObjectID format
+   * - parses the from and to date strings into Date objects
+   * - parses the limit string into a Number data type
+   * - assigns a DEFAULT_LIMIT value to limit if the defined value is 0 or negative number
+   * - assigns the validated _id back into the req.params object
+   * - assigns the validated from, to, and "limit" back to the req.query object
    * 
    * @param {Object} req The Express request object.
    * @param {Object} res The Express response object.
    * @param {Function} next The next middleware function.
    * @throws {Error} When:
-   * - the _id is not of string type, is empty strings after trimming, or is not a valid MongoDB ObjectId
-   * - the infomed limit can't be parsed into Number, or is greater than the system's MAX_LIMIT
-   * - the infromed "from" is later than the informed "to", or either is not a valid date string format
+   * - the _id is not a string, becomes an empty strings after trimming, or does not conform to a valid MongoDB ObjectId
+   * - the provided limit cannot be parsed into a Number, or is greater than the system's MAX_LIMIT
+   * - the provided from is later than the provided to, or either is not a valid date string format
    * @returns {undefined} Calls the next middleware function in the absence of errors. If an error is thrown, 
    * it sends a JSON response with a 400 status code and an error message.
    */
@@ -421,22 +421,24 @@ connect()
   };
 
   /**
-   * @api {get} /api/users/:_id/logs Return list of exercises for a specified user
+   * @api {get} /api/users/:_id/logs Returns a list of exercises for a specified user
    * @apiName ReturnExercises
    * @apiGroup Exercise
    * 
    * @apiParam  {String} _id The ID of the user
-   * @apiParam  {String} [from] The optional date in "yyyy-mm-dd" format from when to select the exercises
-   * @apiParam  {String} [to] The optional date in "yyyy-mm-dd" format up to when to select the exercises
-   * @apiParam  {Number} [limit] The positive integer to limit the max number of returned exercises
+   * @apiParam  {String} [from] The optional 'from' date in "yyyy-mm-dd" format
+   * to specify the earliest date for selecting exercises
+   * @apiParam  {String} [to] The optional 'to' date in "yyyy-mm-dd" format 
+   * to specify the latest date for selecting exercises
+   * @apiParam  {Number} [limit] The positive integer to limit the number of returned exercises
    *
    * @apiSuccess {String} username The username of the returned user
    * @apiSuccess {Number} count The number of exercises in the log list
    * @apiSuccess {String} _id The ID of the returned user
    * @apiSuccess {Object[]} log The list of exercise objects
-   * @apiSuccess {String} exercise.description The returned exercises description
-   * @apiSuccess {Number} exercise.duration The returned exercises duration in minutes
-   * @apiSuccess {String} exercise.date The returned exercises date string in "Weekday Month Day Year" format
+   * @apiSuccess {String} exercise.description The description of each returned exercise 
+   * @apiSuccess {Number} exercise.duration The duration of each returned exercise, in minutes
+   * @apiSuccess {String} exercise.date The date  of each returned exercise, in "Weekday Month Day Year" format
    * 
    * @apiSuccessExample {json} Success-Response:
    *     HTTP/1.1 200 OK
@@ -461,34 +463,34 @@ connect()
    *       "message": "No user found with _id: 647885afc7da74ce5419854d"
    *     }
    * 
-   * @apiError (404) {String} message The error message when no exercise is found with the specified criteria
+   * @apiError (404) {String} message The error message when no exercises are found with the specified criteria
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 404 Not Found
    *     {
-   *       "message": "No exercise found with criteria
+   *       "message": "No exercises found with criteria
    *         - ID: 647885afc7da74ce5419854d 
    *         - from: Sat Jun 03 2023 
    *         - to: Sun Jun 04 2023  
    *         - limit: 1"
    *     }
    * 
-   * @apiError (500) {String} message The error message when fetching the exercise list, or the user ID
+   * @apiError (500) {String} message The error message while fetching the exercise list, or the user ID
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 500 Internal Server Error
    *     {
-   *       "message": "Error reading exercise list"
+   *       "message": "Error while creating exercise list"
    *     }
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 500 Internal Server Error
    *     {
-   *       "message": "Error reading _id: 647885afc7da74ce5419854d"
+   *       "message": "Error while reading _id: 647885afc7da74ce5419854d"
    *     }
    * 
-   * @apiError (400) {String} message The error message when the specified limit can't be parsed into Number, or
-   * exceeds the setting's maximum limit (50)
+   * @apiError (400) {String} message The error message when the specified limit can't be parsed into a Number, or
+   * exceeds the systems's maximum limit (50)
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 400 Bad Request
@@ -502,7 +504,7 @@ connect()
    *       "message": "limit cannot exceed 50"
    *     }
    * 
-   * @apiError (400) {String} message The error message when "from" is a later date than "to"
+   * @apiError (400) {String} message The error message when from is a later date than to
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 400 Bad Request
@@ -510,7 +512,7 @@ connect()
    *       "message": "'from' cannot be later than 'to'"
    *     }
    * 
-   * @apiError (400) {String} message The error message when either date "from" or "to" can't be parsed into Date Object
+   * @apiError (400) {String} message The error message when either date from or to cannot be parsed into a Date Object
    * 
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 400 Bad Request
@@ -532,7 +534,7 @@ connect()
         const { username } = userDoc;
         let { from, to, limit } = req.query;
         
-        let message = `No exercise found with criteria - ID: ${_id}`;
+        let message = `No exercises found with criteria - ID: ${_id}`;
         let findQuery;
 
         if (from && to) {
@@ -569,11 +571,11 @@ connect()
             res.json({ username, count, _id, log });
           }
         } catch (error) {
-          return res.status(500).json({ message: 'Error reading exercise list'});
+          return res.status(500).json({ message: 'Error while creating exercise list'});
         }
       }
     } catch (error) {
-      return res.status(500).json({ message: `Error reading _id: ${_id}`});
+      return res.status(500).json({ message: `Error while reading _id: ${_id}`});
     }
   });
 
