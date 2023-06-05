@@ -110,7 +110,7 @@ connect()
    * @apiName CreateUser
    * @apiGroup User
    * 
-   * @apiParam {String} username The username for the new user
+   * @apiParam (body) {String} username The username for the new user
    *
    * @apiSuccess {String} username The username of the newly created user
    * @apiSuccess {String} _id The MongoDB ObjectID of the newly created user
@@ -127,7 +127,7 @@ connect()
    * @apiErrorExample {json} Error-Response:
    *     HTTP/1.1 500 Internal Server Error
    *     {
-   *       "message": "Error creating the user: test"
+   *       "message": "Error creating the user: Test"
    *     }
    * 
    * @apiError (Common) Refer to [Common Errors](../COMMON_ERRORS.md) document 
@@ -151,8 +151,8 @@ connect()
    * @apiGroup User
    *
    * @apiSuccess {Object[]} users The list of all users
-   * @apiSuccess {String} users.username The username of each user
-   * @apiSuccess {String} users._id The ID of each user
+   * @apiSuccess {String} user.username The username of each user
+   * @apiSuccess {String} user._id The ID of each user
    * 
    * @apiSuccessExample {json} Success-Response:
    *     HTTP/1.1 200 OK
@@ -253,9 +253,9 @@ connect()
    * @apiGroup Exercise
    * 
    * @apiParam  {String} _id The ID of the user
-   * @apiParam  {String} description The description of the exercise
-   * @apiParam  {Number} duration The duration fo the exercise in minutes
-   * @apiParam  {String} [date] The date of the exercise in "yyyy-mm-dd" format (Optional)
+   * @apiParam (body) {String} description The description of the exercise
+   * @apiParam (body) {Number} duration The duration of the exercise in minutes
+   * @apiParam (body) {String} [date] The date of the exercise in "yyyy-mm-dd" format (Optional)
    *
    * @apiSuccess {String} username The username of the user
    * @apiSuccess {String} description The description of the created exercise
@@ -320,7 +320,7 @@ connect()
    *       "message": "Invalid Date Format. See @ https://tc39.es/ecma262/#sec-date-time-string-format"
    *     }
    * 
-   * @apiError (Common) Refer to [Common Errors](../COMMON_ERRORS.md) document 
+   * @apiError (Common) Refer to [Common Errors](../commonErrors.md) document 
    * for common errors that can occur with this endpoint.
    */ 
   app.post('/api/users/:_id/exercises', parseExerciseInput, async (req, res) => {
